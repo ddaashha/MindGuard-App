@@ -1,0 +1,159 @@
+
+html, body, [data-testid="stAppViewContainer"] {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+header, [data-testid="stHeader"] {
+    display: none !important;
+}
+
+.stAppViewMain {
+    margin-top: -60px !important;
+}
+
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 5% !important;
+    padding-right: 5% !important;
+    max-width: 100% !important;
+}
+
+.custom-card {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-logo {
+    width: 70px;
+    height: 70px;
+    background: #eef2ff;
+    padding: 12px;
+    border-radius: 20px;
+}
+
+.header-title-inline {
+    margin: 0 !important;
+    font-size: 38px !important;
+    font-weight: 850 !important;
+    letter-spacing: -1px;
+    color: #1e293b;
+}
+
+.description-text {
+    color: #475569;
+    font-size: 1.25rem !important;
+    line-height: 1.6;
+    margin-top: 20px;
+    font-weight: 450 !important;
+}
+
+div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p,
+div[data-testid="stTextArea"] label[data-testid="stWidgetLabel"] p,
+div[data-testid="stSelectbox"] label p {
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    font-size: 1.2rem !important;
+    min-height: 58px !important;
+    border-radius: 15px !important;
+    border: 2px solid #e2e8f0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+div[data-testid="stRadio"] label[data-baseweb="radio"] {
+    background: #ffffff !important;
+    padding: 16px 24px !important;
+    border-radius: 16px !important;
+    border: 2px solid #e2e8f0 !important;
+    font-size: 1.1rem !important;
+}
+
+div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+    border-color: #6366f1 !important;
+}
+
+div[data-testid="stTextArea"] textarea {
+    font-size: 1.2rem !important;
+    border-radius: 18px !important;
+    border: 2px solid #e2e8f0 !important;
+}
+
+div[data-testid="stDataFrame"] {
+    border-radius: 15px !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+div[data-testid="column"]:nth-child(2) {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+.footer-warning {
+    background: #fff5f5;
+    padding: 25px;
+    border-radius: 20px;
+    margin-top: 40px;
+}
+
+.footer-warning h3 {
+    color: #991b1b;
+    margin: 0;
+}
+
+.help-line {
+    font-weight: 700;
+    color: #ef4444;
+}
+
+div.stButton {
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+div.stButton > button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding-left: 55px !important;
+    background-image: url('https://img.icons8.com/?size=100&id=HWCi4PO4E8Uf&format=png&color=ffffff') !important;
+    background-repeat: no-repeat !important;
+    background-position: 20px center !important;
+    background-size: 28px !important;
+    background-color: #1e293b !important;
+    color: white !important;
+    border-radius: 18px !important;
+    height: 4.2rem !important;
+
+    width: 380px !important;
+    margin-top: -25px !important;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+    border: none !important;
+    transition: all 0.3s ease !important;
+}
+
+div.stButton > button:hover {
+    background-color: #6366f1 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4) !important;
+}
