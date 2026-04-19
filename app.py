@@ -4,6 +4,8 @@ from transformers import pipeline
 import joblib
 import re
 import os
+import gdown
+import zipfile
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import time
 import plotly.express as px
@@ -12,14 +14,54 @@ import sqlite3
 from datetime import datetime
 from auth_page import show_login_page
 
+# --- БЛОК АВТОМАТИЧНОГО ЗАВАНТАЖЕННЯ МОДЕЛЕЙ ---
+def download_models_from_gdrive():
+    # ID твоїх файлів з посилань
+    MODELS_CONFIG = {
+        "models/bilstm_model": "1Jw03wPtIbgmwmWrldNp8TZG1ZzhMucB-",
+        "models/lstm_model": "1RPMSSwh6Y7jJDjZyvHmuFfQRc5JT2IK8",
+        "models/roberta_model": "1p56mmm-n8TGglvsDDPXYcl0ZvMa1ux9_"
+    }
 
+    if not os.path.exists("models"):
+        os.makedirs("models")
 
+    for folder_path, file_id in MODELS_CONFIG.items():
+        if not os.path.exists(folder_path):
+            with st.spinner(f'Завантаження {folder_path}... Зачекайте, це лише раз.'):
+                zip_path = folder_path + ".zip"
+                url = f'https://drive.google.com/uc?id={file_id}'
+                
+                # Скачуємо
+                gdown.download(url, zip_path, quiet=False)
+                
+                # Розпаковуємо
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall("models")
+                
+                # Видаляємо архів після розпаковки
+                os.remove(zip_path)
+
+# Викликаємо завантаження перед усім іншим
+download_models_from_gdrive()
+
+# --- БАЗА ДАНИХ ---
 def init_db():
-    conn = sqlite3.connect('mindguard_history.db')
+    conn = sqlite3.connect('mindguard_system.db')
     c = conn.cursor()
+    # Створюємо таблицю користувачів (якщо вона зникла)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+    ''')
+    # Створюємо таблицю історії
     c.execute('''
         CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             timestamp TEXT,
             user_text TEXT,
             model_used TEXT,
@@ -31,9 +73,9 @@ def init_db():
     conn.close()
 
 def save_to_db(text, model, emotion, score):
+    init_db() # Гарантуємо, що таблиці існують
     conn = sqlite3.connect('mindguard_system.db')
     c = conn.cursor()
-    # Додаємо user_id з session_state
     c.execute('''
         INSERT INTO history (user_id, timestamp, user_text, model_used, top_emotion, confidence)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -41,11 +83,10 @@ def save_to_db(text, model, emotion, score):
     conn.commit()
     conn.close()
 
-
 def get_history(days=None):
     conn = sqlite3.connect('mindguard_system.db')
-    user_id = st.session_state.user_id  # Отримуємо ID поточного юзера
-
+    user_id = st.session_state.get('user_id', 0)
+    
     base_query = f"SELECT timestamp as Дата, user_text as Текст, model_used as Консультант, top_emotion as Емоція, confidence as Впевненість FROM history WHERE user_id = {user_id}"
 
     if days == 0:
@@ -57,23 +98,12 @@ def get_history(days=None):
 
     df = pd.read_sql_query(query, conn)
     conn.close()
-
-    df['Консультант'] = df['Консультант'].replace({
-        'Модель RoBERTa': 'ШІ - консультант 1',
-        'Мережа LSTM': 'ШІ - консультант 2',
-        'Мережа BiLSTM': 'ШІ - консультант 3'  # Додано
-    })
     return df
 
+# Ініціалізація
 init_db()
 
-st.set_page_config(
-    page_title="MindGuard",
-    page_icon="https://img.icons8.com/?size=100&id=2070&format=png&color=000000",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
+st.set_page_config(page_title="MindGuard", layout="wide")
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -81,7 +111,7 @@ if 'logged_in' not in st.session_state:
 if not st.session_state.logged_in:
     show_login_page()
     st.stop()
-
+    
 def local_css(file_name):
     if os.path.exists(file_name):
         with open(file_name, encoding="utf-8") as f:
@@ -209,31 +239,25 @@ st.markdown(header_html, unsafe_allow_html=True)
 
 @st.cache_resource
 def load_models():
-    rb_path = os.path.join("models", "roberta_model")
+    # Шляхи тепер відповідають структурі розпакованих ZIP
     try:
-        classifier_rb = pipeline("text-classification", model=rb_path, tokenizer=rb_path,
-                                 return_all_scores=True, use_fast=False)
-    except:
-        classifier_rb = None
+        classifier_rb = pipeline("text-classification", model="models/roberta_model", use_fast=False)
+    except: classifier_rb = None
 
     try:
         model_lstm = tf.keras.models.load_model("models/lstm_model/lstm_model.keras")
         tokenizer_lstm = joblib.load("models/lstm_model/tokenizer_lstm.pkl")
         id2label_lstm = joblib.load("models/lstm_model/id2label_lstm.pkl")
-    except:
-        model_lstm, tokenizer_lstm, id2label_lstm = None, None, None
+    except: model_lstm, tokenizer_lstm, id2label_lstm = None, None, None
 
-    # Додаємо BiLSTM
     try:
         model_bilstm = tf.keras.models.load_model("models/bilstm_model/bilstm_model.keras")
         tokenizer_bilstm = joblib.load("models/bilstm_model/tokenizer_bilstm.pkl")
         id2label_bilstm = joblib.load("models/bilstm_model/id2label_bilstm.pkl")
-    except:
-        model_bilstm, tokenizer_bilstm, id2label_bilstm = None, None, None
+    except: model_bilstm, tokenizer_bilstm, id2label_bilstm = None, None, None
 
     return classifier_rb, model_lstm, tokenizer_lstm, id2label_lstm, model_bilstm, tokenizer_bilstm, id2label_bilstm
 
-# Виклик функції (оновлений список змінних)
 rb_model, lstm_model, lstm_tok, lstm_labels, bilstm_model, bilstm_tok, bilstm_labels = load_models()
 
 def clean_text(t):
